@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 — LTI Tools & LMS Workflow | BS AI Faculty Onboarding | UNC Charlotte CTL</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #F7F9FC;
+    color: #1E293B;
+    min-height: 100vh;
+  }
+
+  /* ── TOP NAV ── */
+  .topbar {
+    background: #1B2A4A;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+    height: 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: 0.04em; }
+  .topbar-sep { color: #4A6080; font-size: 14px; }
+  .topbar-course { font-size: 13px; color: #8BAED4; }
+  .topbar-course span { color: #028090; }
+
+  /* ── LAYOUT ── */
+  .shell {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - 52px);
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #fff;
+    border-left: 0.5px solid #E2E8F0;
+    border-right: 0.5px solid #E2E8F0;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: #fff;
+    border-right: 0.5px solid #E2E8F0;
+    padding: 20px 0;
+    position: sticky;
+    top: 52px;
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94A3B8;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0 18px 10px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    font-size: 13px;
+    color: #64748B;
+    transition: background 0.12s;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: #F1F5F9; }
+  .nav-item.active { background: #E1F5EE; border-left-color: #028090; color: #085041; font-weight: 500; }
+  .nav-item.done .dot { background: #028090; color: #fff; border-color: #028090; }
+  .nav-item.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 1.5px solid #CBD5E1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: #94A3B8;
+    flex-shrink: 0;
+  }
+  .nav-item.active .dot { background: #028090; color: #fff; border-color: #028090; }
+
+  .prog-wrap { padding: 16px 18px 8px; }
+  .prog-label { font-size: 11px; color: #94A3B8; margin-bottom: 6px; }
+  .prog-track { height: 5px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; background: #028090; border-radius: 99px; transition: width 0.4s; }
+  .prog-pct { font-size: 11px; color: #64748B; margin-top: 5px; }
+
+  /* ── MAIN CONTENT ── */
+  .content {
+    padding: 32px 36px;
+    max-width: 720px;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── MODULE HEADER ── */
+  .mod-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+  .mod-badge {
+    background: #028090; color: #fff;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 12px; border-radius: 99px;
+    flex-shrink: 0; margin-top: 4px;
+  }
+  .mod-badge.step { background: #E1F5EE; color: #085041; }
+  .mod-badge.check { background: #1B2A4A; color: #fff; }
+  .mod-title { font-size: 22px; font-weight: 600; color: #1B2A4A; line-height: 1.3; }
+  .mod-meta { font-size: 13px; color: #94A3B8; margin-top: 4px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: #fff;
+    border: 0.5px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+  }
+  .card-label {
+    font-size: 10px; font-weight: 600; color: #94A3B8;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+
+  /* ── STEP LIST (intro) ── */
+  .step-list { display: flex; flex-direction: column; gap: 8px; }
+  .step-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 14px;
+    border: 0.5px solid #E2E8F0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .step-row:hover { background: #F8FAFC; }
+  .step-row.s-active { border-color: #028090; background: #E1F5EE; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #F1F5F9; border: 1.5px solid #CBD5E1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: #64748B;
+    flex-shrink: 0;
+  }
+  .step-row.s-active .step-num { background: #028090; border-color: #028090; color: #fff; }
+  .step-row.s-done .step-num { background: #028090; border-color: #028090; color: #fff; }
+  .step-text { font-size: 13px; color: #1E293B; font-weight: 500; line-height: 1.4; padding-top: 3px; }
+  .step-sub { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid #028090;
+    background: #E1F5EE;
+    padding: 11px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: #085041;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .callout.warn { border-left-color: #E8A835; background: #FAEEDA; color: #633806; }
+
+  /* ── LTI DIAGRAM ── */
+  .lti-flow {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap; margin: 10px 0 6px;
+  }
+  .lti-box {
+    background: #F1F5F9; border: 0.5px solid #CBD5E1;
+    border-radius: 8px; padding: 8px 14px;
+    font-size: 12px; font-weight: 500; color: #1E293B;
+    text-align: center; line-height: 1.4;
+  }
+  .lti-box.hi { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .lti-arrow { color: #94A3B8; font-size: 16px; font-weight: 300; }
+  .lti-caption { font-size: 11px; color: #94A3B8; margin-top: 6px; }
+
+  /* ── 2x2 GRID ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .grid-cell {
+    background: #F8FAFC; border-radius: 8px;
+    padding: 12px 14px; font-size: 13px; color: #1E293B;
+  }
+  .grid-cell-title { font-weight: 600; color: #085041; margin-bottom: 4px; font-size: 12px; }
+
+  /* ── CFG STEPS ── */
+  .cfg-step {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    border: 0.5px solid #E2E8F0;
+    margin-bottom: 7px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .cfg-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #028090; color: #fff;
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .cfg-title { font-size: 13px; font-weight: 600; color: #1B2A4A; margin-bottom: 3px; }
+  .cfg-detail { font-size: 12px; color: #64748B; line-height: 1.5; }
+
+  /* ── DASHBOARD STATS ── */
+  .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { border-radius: 8px; padding: 14px; text-align: center; }
+  .stat-card.neutral { background: #F1F5F9; }
+  .stat-card.good { background: #E1F5EE; }
+  .stat-card.warn { background: #FAEEDA; }
+  .stat-label { font-size: 11px; color: #64748B; margin-bottom: 4px; }
+  .stat-card.good .stat-label { color: #0F6E56; }
+  .stat-card.warn .stat-label { color: #854F0B; }
+  .stat-num { font-size: 28px; font-weight: 700; color: #1B2A4A; }
+  .stat-card.good .stat-num { color: #085041; }
+  .stat-card.warn .stat-num { color: #633806; }
+
+  /* ── SKILL BARS ── */
+  .skill-bar-wrap { margin-bottom: 10px; }
+  .skill-bar-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .skill-bar-track { height: 7px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
+  .skill-bar-fill { height: 100%; border-radius: 99px; transition: width 0.7s ease; }
+
+  /* ── QUIZ ── */
+  .quiz-q { font-size: 14px; font-weight: 600; color: #1B2A4A; margin-bottom: 14px; line-height: 1.5; }
+  .quiz-opt {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    border: 0.5px solid #E2E8F0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 13px; color: #1E293B;
+    transition: background 0.12s;
+  }
+  .quiz-opt:hover { background: #F8FAFC; }
+  .quiz-opt.correct { border-color: #1D9E75; background: #E1F5EE; color: #085041; }
+  .quiz-opt.wrong { border-color: #E24B4A; background: #FCEBEB; color: #7F1D1D; }
+  .radio {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1.5px solid #CBD5E1; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .radio.on { background: #028090; border-color: #028090; }
+  .radio.on::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+  .radio.wrong-r { background: #E24B4A; border-color: #E24B4A; }
+  .radio.wrong-r::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+  .quiz-fb {
+    font-size: 13px; padding: 10px 14px;
+    border-radius: 8px; margin-top: 6px;
+    display: none; line-height: 1.5;
+  }
+  .quiz-fb.ok { background: #E1F5EE; color: #085041; display: block; }
+  .quiz-fb.bad { background: #FCEBEB; color: #7F1D1D; display: block; }
+
+  /* ── COMPLETE BANNER ── */
+  .complete-banner {
+    background: #E1F5EE; border-radius: 12px;
+    padding: 24px; text-align: center;
+    margin-top: 20px; display: none;
+  }
+  .complete-banner.show { display: block; }
+  .complete-title { font-size: 20px; font-weight: 700; color: #085041; margin-bottom: 6px; }
+  .complete-sub { font-size: 14px; color: #0F6E56; margin-bottom: 16px; }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .btn {
+    padding: 9px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; transition: background 0.12s, transform 0.08s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: #028090; color: #fff; }
+  .btn-primary:hover { background: #026b78; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: #fff; color: #64748B;
+    border: 0.5px solid #CBD5E1;
+  }
+  .btn-ghost:hover { background: #F1F5F9; }
+
+  /* ── PRESENTATION BANNER ── */
+  .pres-banner {
+    background: #1B2A4A; color: #8BAED4;
+    font-size: 11px; text-align: center;
+    padding: 6px;
+    letter-spacing: 0.05em;
+  }
+  .pres-banner strong { color: #028090; }
+</style>
+</head>
+<body>
+
+<div class="pres-banner">
+  <strong>INTERVIEW PROTOTYPE</strong> &nbsp;·&nbsp; Built to demonstrate instructional design for the BS AI Faculty Onboarding course &nbsp;·&nbsp; UNC Charlotte Center for Teaching &amp; Learning &nbsp;·&nbsp; Module 4 of 5
+</div>
+
+<div class="topbar">
+  <div class="topbar-logo">Canvas @ UNCC</div>
+  <div class="topbar-sep">/</div>
+  <div class="topbar-course">BS AI Faculty Onboarding &rsaquo; <span>M4: LTI Tools &amp; LMS Workflow</span></div>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Course modules</div>
+
+    <div class="nav-item done" onclick="goStep(0)">
+      <div class="dot">&#10003;</div>Welcome &amp; Overview
+    </div>
+    <div class="nav-item done" onclick="goStep(0)">
+      <div class="dot">&#10003;</div>AI Competency Framework
+    </div>
+    <div class="nav-item done" onclick="goStep(0)">
+      <div class="dot">&#10003;</div>Your Course in Context
+    </div>
+    <div class="nav-item active" id="nav-m4">
+      <div class="dot">4</div>LTI Tools &amp; LMS Workflow
+    </div>
+    <div class="nav-item locked" id="nav-m5">
+      <div class="dot">5</div>Readiness Survey
+    </div>
+
+    <div class="prog-wrap">
+      <div class="prog-label">Overall progress</div>
+      <div class="prog-track">
+        <div class="prog-fill" id="prog" style="width:60%"></div>
+      </div>
+      <div class="prog-pct" id="prog-pct">3 of 5 modules complete</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="content">
+
+    <!-- PANEL 0: INTRO -->
+    <div class="panel active" id="panel-0">
+      <div class="mod-header">
+        <div class="mod-badge">Module 4</div>
+        <div>
+          <div class="mod-title">LTI tools &amp; LMS workflow</div>
+          <div class="mod-meta">8 min &nbsp;&middot;&nbsp; 3 steps &nbsp;&middot;&nbsp; 1 knowledge check</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">What you&rsquo;ll learn</div>
+        <div class="step-list">
+          <div class="step-row s-active" onclick="goStep(1)">
+            <div class="step-num" id="sn1">1</div>
+            <div>
+              <div class="step-text">How LTI connects your courseware to Canvas</div>
+              <div class="step-sub">2 min &nbsp;&middot;&nbsp; Diagram walkthrough</div>
+            </div>
+          </div>
+          <div class="step-row" id="sr2" onclick="goStep(2)">
+            <div class="step-num" id="sn2">2</div>
+            <div>
+              <div class="step-text">Configuring your first LTI assignment</div>
+              <div class="step-sub">3 min &nbsp;&middot;&nbsp; Step-by-step guide</div>
+            </div>
+          </div>
+          <div class="step-row" id="sr3" onclick="goStep(3)">
+            <div class="step-num" id="sn3">3</div>
+            <div>
+              <div class="step-text">Interpreting student data from the LTI dashboard</div>
+              <div class="step-sub">2 min &nbsp;&middot;&nbsp; Dashboard overview</div>
+            </div>
+          </div>
+          <div class="step-row" id="sr4" onclick="goStep(4)">
+            <div class="step-num" id="sn4">&bull;</div>
+            <div>
+              <div class="step-text">Knowledge check</div>
+              <div class="step-sub">1 min &nbsp;&middot;&nbsp; 2 questions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        You don&rsquo;t need to configure anything before your first class meeting &mdash; this module shows you exactly what to expect so there are no surprises.
+      </div>
+
+      <div class="callout warn">
+        <strong>About this prototype:</strong> This module was designed to demonstrate instructional design thinking for the BS AI Faculty Onboarding course at UNC Charlotte&rsquo;s Center for Teaching &amp; Learning. It illustrates how faculty would experience Module 4 in the full micro-course prior to their first class.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goStep(1)">Start module &rarr;</button>
+      </div>
+    </div>
+
+    <!-- PANEL 1: HOW LTI WORKS -->
+    <div class="panel" id="panel-1">
+      <div class="mod-header">
+        <div class="mod-badge step">Step 1 of 3</div>
+        <div>
+          <div class="mod-title">How LTI connects your courseware to Canvas</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">The LTI handshake &mdash; what actually happens</div>
+        <div class="lti-flow">
+          <div class="lti-box">Student clicks<br>assignment</div>
+          <div class="lti-arrow">&rarr;</div>
+          <div class="lti-box hi">Canvas sends<br>LTI launch</div>
+          <div class="lti-arrow">&rarr;</div>
+          <div class="lti-box">Courseware<br>authenticates</div>
+          <div class="lti-arrow">&rarr;</div>
+          <div class="lti-box">Personalized<br>content loads</div>
+          <div class="lti-arrow">&rarr;</div>
+          <div class="lti-box hi">Score sent<br>to Gradebook</div>
+        </div>
+        <div class="lti-caption">This all happens automatically &mdash; no student login or separate app needed.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">What this means for you as faculty</div>
+        <div class="grid2">
+          <div class="grid-cell">
+            <div class="grid-cell-title">You set up once</div>
+            Link the LTI tool to your Canvas module &mdash; the CTL team configures the backend credentials.
+          </div>
+          <div class="grid-cell">
+            <div class="grid-cell-title">Students see it natively</div>
+            Homework appears as a standard Canvas assignment. No new passwords or portals.
+          </div>
+          <div class="grid-cell">
+            <div class="grid-cell-title">Grades flow automatically</div>
+            Scores sync to your Canvas Gradebook within minutes of submission.
+          </div>
+          <div class="grid-cell">
+            <div class="grid-cell-title">Personalization is automatic</div>
+            The courseware adapts content per student &mdash; you review the aggregate dashboard.
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(0)">&larr; Back</button>
+        <button class="btn btn-primary" onclick="goStep(2)">Next: Configure an assignment &rarr;</button>
+      </div>
+    </div>
+
+    <!-- PANEL 2: CONFIGURING AN ASSIGNMENT -->
+    <div class="panel" id="panel-2">
+      <div class="mod-header">
+        <div class="mod-badge step">Step 2 of 3</div>
+        <div>
+          <div class="mod-title">Configuring your first LTI assignment</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Step-by-step in Canvas</div>
+        <div id="cfg-list"></div>
+        <div class="callout" id="cfg-tip" style="margin-top:12px;margin-bottom:0;">
+          Click &ldquo;Show step 1&rdquo; to walk through the configuration process.
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-ghost" id="btn-cfg-prev" onclick="cfgPrev()" style="display:none;">&larr; Previous step</button>
+          <button class="btn btn-primary" id="btn-cfg-next" onclick="cfgNext()">Show step 1</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(1)">&larr; Back</button>
+        <button class="btn btn-primary" id="btn-s2-next" onclick="goStep(3)" style="display:none;">Next: Reading the dashboard &rarr;</button>
+      </div>
+    </div>
+
+    <!-- PANEL 3: DASHBOARD -->
+    <div class="panel" id="panel-3">
+      <div class="mod-header">
+        <div class="mod-badge step">Step 3 of 3</div>
+        <div>
+          <div class="mod-title">Interpreting student data from the LTI dashboard</div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card neutral">
+          <div class="stat-label">Class avg. score</div>
+          <div class="stat-num">74%</div>
+        </div>
+        <div class="stat-card good">
+          <div class="stat-label">On track</div>
+          <div class="stat-num">18</div>
+        </div>
+        <div class="stat-card warn">
+          <div class="stat-label">Need support</div>
+          <div class="stat-num">4</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Top struggled concepts this week</div>
+        <div id="skill-bars"></div>
+      </div>
+
+      <div class="callout">
+        The CTL team reviews this dashboard with you each month &mdash; you never have to interpret this alone.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(2)">&larr; Back</button>
+        <button class="btn btn-primary" onclick="goStep(4)">Take knowledge check &rarr;</button>
+      </div>
+    </div>
+
+    <!-- PANEL 4: QUIZ -->
+    <div class="panel" id="panel-4">
+      <div class="mod-header">
+        <div class="mod-badge check">Knowledge check</div>
+        <div>
+          <div class="mod-title">Quick check: LTI &amp; LMS workflow</div>
+          <div class="mod-meta">2 questions &nbsp;&middot;&nbsp; No time limit</div>
+        </div>
+      </div>
+
+      <div class="card" id="q1-card">
+        <div class="quiz-q">1. When a student completes an LTI homework assignment, where does their score appear?</div>
+        <div class="quiz-opt" id="q1o1" onclick="ans(1,1)"><div class="radio" id="q1r1"></div>They email it to you manually</div>
+        <div class="quiz-opt" id="q1o2" onclick="ans(1,2)"><div class="radio" id="q1r2"></div>It syncs automatically to the Canvas Gradebook</div>
+        <div class="quiz-opt" id="q1o3" onclick="ans(1,3)"><div class="radio" id="q1r3"></div>You download a CSV from the courseware portal</div>
+        <div class="quiz-fb" id="q1fb"></div>
+      </div>
+
+      <div class="card" id="q2-card" style="margin-top:12px;">
+        <div class="quiz-q">2. Who configures the LTI backend credentials in Canvas?</div>
+        <div class="quiz-opt" id="q2o1" onclick="ans(2,1)"><div class="radio" id="q2r1"></div>Each faculty member configures their own</div>
+        <div class="quiz-opt" id="q2o2" onclick="ans(2,2)"><div class="radio" id="q2r2"></div>Students set it up on first login</div>
+        <div class="quiz-opt" id="q2o3" onclick="ans(2,3)"><div class="radio" id="q2r3"></div>The CTL team configures it &mdash; faculty just link the assignment</div>
+        <div class="quiz-fb" id="q2fb"></div>
+      </div>
+
+      <div class="complete-banner" id="complete">
+        <div class="complete-title">Module 4 complete!</div>
+        <div class="complete-sub">You&rsquo;re ready for the readiness survey &mdash; the final step before your first class.</div>
+        <button class="btn btn-primary" onclick="unlockM5()">Continue to Module 5 &rarr;</button>
+      </div>
+
+      <div class="callout" style="margin-top:20px;">
+        <strong>Prototype note:</strong> This knowledge check demonstrates how faculty readiness data would be captured and used by the CTL team to target support before courses go live. In the full course, results would feed directly into the onboarding dashboard.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(3)">&larr; Back</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const cfgSteps = [
+    { title: "Open your Canvas course", detail: "Navigate to your BS AI course shell — the CTL team will have already set up the base template for you." },
+    { title: "Go to Modules > Add Item", detail: "Inside the relevant module (e.g., Week 2 Practice), click the + icon and select External Tool from the dropdown." },
+    { title: "Choose the courseware tool", detail: "Select the pre-configured LTI tool from the list (e.g., 'UNCC AI Courseware'). You'll see a preview of available assignments." },
+    { title: "Select your assignment", detail: "Browse or search for the specific homework set aligned to your learning objectives. Click Select." },
+    { title: "Set points & due date", detail: "Enter the point value and due date as you would for any Canvas assignment. The gradebook column is created automatically." },
+    { title: "Publish when ready", detail: "Click Save then Publish. Students can now access the LTI homework directly inside Canvas — no separate login needed." },
+  ];
+
+  const skills = [
+    { label: "Gradient descent intuition", pct: 68 },
+    { label: "Overfitting vs underfitting", pct: 54 },
+    { label: "Feature engineering basics", pct: 41 },
+  ];
+
+  let cfgIdx = 0;
+  let q1done = false, q2done = false;
+
+  function goStep(n) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + n).classList.add('active');
+    if (n === 2) resetCfg();
+    if (n === 3) buildSkillBars();
+    updateProg(n);
+    window.scrollTo(0, 0);
+  }
+
+  function updateProg(n) {
+    const pcts = [60, 65, 72, 80, 100];
+    const labels = ['3 of 5 modules complete', 'Step 1 of 3', 'Step 2 of 3', 'Step 3 of 3', 'Knowledge check'];
+    document.getElementById('prog').style.width = (pcts[n] || 60) + '%';
+    document.getElementById('prog-pct').textContent = labels[n] || '';
+  }
+
+  function resetCfg() {
+    cfgIdx = 0;
+    document.getElementById('cfg-list').innerHTML = '';
+    document.getElementById('cfg-tip').textContent = 'Click "Show step 1" to walk through the configuration process.';
+    document.getElementById('btn-cfg-next').textContent = 'Show step 1';
+    document.getElementById('btn-cfg-next').disabled = false;
+    document.getElementById('btn-cfg-prev').style.display = 'none';
+    document.getElementById('btn-s2-next').style.display = 'none';
+  }
+
+  function cfgNext() {
+    const s = cfgSteps[cfgIdx];
+    const div = document.createElement('div');
+    div.className = 'cfg-step';
+    div.innerHTML = '<div class="cfg-num">' + (cfgIdx + 1) + '</div><div><div class="cfg-title">' + s.title + '</div><div class="cfg-detail">' + s.detail + '</div></div>';
+    document.getElementById('cfg-list').appendChild(div);
+    cfgIdx++;
+    document.getElementById('btn-cfg-prev').style.display = '';
+    document.getElementById('cfg-tip').textContent = 'Step ' + cfgIdx + ' of ' + cfgSteps.length + (cfgIdx < cfgSteps.length ? ' — ' + (cfgSteps.length - cfgIdx) + ' more to go.' : ' — all steps shown!');
+    if (cfgIdx >= cfgSteps.length) {
+      document.getElementById('btn-cfg-next').disabled = true;
+      document.getElementById('btn-s2-next').style.display = '';
+    } else {
+      document.getElementById('btn-cfg-next').textContent = 'Show step ' + (cfgIdx + 1);
+    }
+  }
+
+  function cfgPrev() {
+    const list = document.getElementById('cfg-list');
+    if (list.lastChild) list.removeChild(list.lastChild);
+    cfgIdx = Math.max(0, cfgIdx - 1);
+    if (cfgIdx === 0) document.getElementById('btn-cfg-prev').style.display = 'none';
+    document.getElementById('btn-cfg-next').disabled = false;
+    document.getElementById('btn-cfg-next').textContent = 'Show step ' + (cfgIdx + 1);
+    document.getElementById('btn-s2-next').style.display = 'none';
+    document.getElementById('cfg-tip').textContent = cfgIdx === 0 ? 'Click "Show step 1" to walk through.' : 'Step ' + cfgIdx + ' of ' + cfgSteps.length;
+  }
+
+  function buildSkillBars() {
+    const c = document.getElementById('skill-bars');
+    c.innerHTML = '';
+    skills.forEach(s => {
+      const color = s.pct < 50 ? '#E24B4A' : s.pct < 70 ? '#E8A835' : '#028090';
+      c.innerHTML += '<div class="skill-bar-wrap">' +
+        '<div class="skill-bar-top"><span style="color:#1E293B;font-size:13px;">' + s.label + '</span><span style="color:#64748B;font-size:12px;">' + s.pct + '% avg</span></div>' +
+        '<div class="skill-bar-track"><div class="skill-bar-fill" style="width:' + s.pct + '%;background:' + color + ';"></div></div></div>';
+    });
+  }
+
+  function ans(qn, choice) {
+    if (qn === 1 && q1done) return;
+    if (qn === 2 && q2done) return;
+    const correct = (qn === 1 && choice === 2) || (qn === 2 && choice === 3);
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('q' + qn + 'o' + i).classList.remove('correct', 'wrong');
+      const r = document.getElementById('q' + qn + 'r' + i);
+      r.classList.remove('on', 'wrong-r');
+    }
+    document.getElementById('q' + qn + 'o' + choice).classList.add(correct ? 'correct' : 'wrong');
+    const radio = document.getElementById('q' + qn + 'r' + choice);
+    radio.classList.add(correct ? 'on' : 'wrong-r');
+    const fb = document.getElementById('q' + qn + 'fb');
+    if (qn === 1) {
+      fb.textContent = correct ? 'Correct! Scores sync automatically to Canvas — no manual downloads needed.' : 'Not quite. Scores sync directly to your Canvas Gradebook without any manual steps.';
+      q1done = true;
+    } else {
+      fb.textContent = correct ? 'Correct! The CTL team handles all backend setup — you only need to link the assignment.' : 'Not quite. The CTL team configures all LTI credentials. You just select and link the assignment.';
+      q2done = true;
+    }
+    fb.className = 'quiz-fb ' + (correct ? 'ok' : 'bad');
+    if (q1done && q2done) {
+      document.getElementById('complete').classList.add('show');
+      document.getElementById('nav-m4').classList.add('done');
+      document.getElementById('prog').style.width = '100%';
+      document.getElementById('prog-pct').textContent = '4 of 5 modules complete';
+    }
+  }
+
+  function unlockM5() {
+    document.getElementById('nav-m5').classList.remove('locked');
+    document.getElementById('nav-m5').style.opacity = '1';
+    document.getElementById('nav-m5').style.pointerEvents = 'auto';
+    document.getElementById('nav-m5').style.cursor = 'pointer';
+    document.getElementById('complete').innerHTML = '<div class="complete-title">All done!</div><div class="complete-sub" style="margin-bottom:0;">Module 5 is now unlocked in the sidebar. Great work!</div>';
+  }
+
+  buildSkillBars();
+</script>
+
+<div style="background:#1B2A4A; color:#4A6080; font-size:11px; text-align:center; padding:12px; letter-spacing:0.04em;">
+  Prototype designed by <strong style="color:#8BAED4;">India Worthy</strong> &nbsp;·&nbsp; Instructional Designer / Technologist II Candidate &nbsp;·&nbsp; UNC Charlotte CTL &nbsp;·&nbsp; May 2026 &nbsp;·&nbsp; <span style="color:#028090;">AI tools used: Claude (Anthropic)</span>
+</div>
+
+</body>
+</html>
